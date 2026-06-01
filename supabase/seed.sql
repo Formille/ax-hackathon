@@ -4,8 +4,9 @@
 -- =====================================================================
 
 -- Settings singleton
+-- max_votes_per_voter = 0 → 1인 투표 수 무제한
 insert into public.settings (id, event_name, phase, max_votes_per_voter, popularity_award_label)
-values (1, 'AX 해커톤 2026', 'draft', 3, '인기상')
+values (1, 'AX 해커톤 2026', 'draft', 0, '인기상')
 on conflict (id) do nothing;
 
 -- Default rubric (편집 가능)

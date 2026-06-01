@@ -38,17 +38,20 @@ export async function castVote(input: {
 
   const sb = createServiceClient();
 
-  const { count } = await sb
-    .from("votes")
-    .select("*", { count: "exact", head: true })
-    .eq("voter_token", input.voteToken);
+  // 0 = unlimited: only enforce a cap when max_votes_per_voter > 0.
+  if (settings.max_votes_per_voter > 0) {
+    const { count } = await sb
+      .from("votes")
+      .select("*", { count: "exact", head: true })
+      .eq("voter_token", input.voteToken);
 
-  if ((count ?? 0) >= settings.max_votes_per_voter) {
-    return {
-      ok: false,
-      limit: true,
-      error: `최대 ${settings.max_votes_per_voter}팀까지 투표할 수 있어요.`,
-    };
+    if ((count ?? 0) >= settings.max_votes_per_voter) {
+      return {
+        ok: false,
+        limit: true,
+        error: `최대 ${settings.max_votes_per_voter}팀까지 투표할 수 있어요.`,
+      };
+    }
   }
 
   const { error } = await sb

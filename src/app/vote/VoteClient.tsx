@@ -82,7 +82,7 @@ export default function VoteClient({
       return;
     }
 
-    if (selected.size >= maxVotes) {
+    if (maxVotes > 0 && selected.size >= maxVotes) {
       return flash(`최대 ${maxVotes}팀까지 투표할 수 있어요.`);
     }
 
@@ -161,8 +161,14 @@ export default function VoteClient({
         <h1 className="text-2xl font-bold">마음에 드는 팀에 투표하세요</h1>
       </div>
       <p className="mt-1 text-sm text-white/55">
-        최대 <b className="text-white/80">{maxVotes}팀</b>까지 선택할 수 있어요. 가장
-        많은 표를 받은 팀이 <b className="text-brand-soft">{awardLabel}</b>을 받습니다.
+        {maxVotes > 0 ? (
+          <>
+            최대 <b className="text-white/80">{maxVotes}팀</b>까지 선택할 수 있어요.{" "}
+          </>
+        ) : (
+          <>마음에 드는 팀에 자유롭게 투표하세요. </>
+        )}
+        가장 많은 표를 받은 팀이 <b className="text-brand-soft">{awardLabel}</b>을 받습니다.
       </p>
 
       <ul className="mt-5 space-y-3">
@@ -240,7 +246,8 @@ export default function VoteClient({
           <span className="text-sm text-white/60">
             {selected.size > 0 ? (
               <>
-                <b className="text-white">{selected.size}팀</b> 선택 · {remaining}표 남음
+                <b className="text-white">{selected.size}팀</b> 선택
+                {maxVotes > 0 ? <> · {remaining}표 남음</> : null}
               </>
             ) : (
               "아직 선택한 팀이 없어요"

@@ -23,8 +23,9 @@ create table if not exists public.settings (
   phase                  text not null default 'draft'
                            check (phase in ('draft', 'voting', 'closed', 'revealed')),
   current_participant_id uuid,                       -- "now presenting" pointer
+  -- 0 = unlimited votes per voter
   max_votes_per_voter    int  not null default 3
-                           check (max_votes_per_voter between 1 and 50),
+                           check (max_votes_per_voter between 0 and 50),
   judging_open           boolean not null default true,
   popularity_award_label text not null default '인기상',
   updated_at             timestamptz not null default now(),

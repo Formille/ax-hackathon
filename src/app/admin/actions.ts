@@ -49,7 +49,7 @@ export async function updateEventSettings(input: {
     .from("settings")
     .update({
       event_name: input.event_name.trim() || "해커톤",
-      max_votes_per_voter: Math.max(1, Math.min(50, Math.round(input.max_votes_per_voter))),
+      max_votes_per_voter: Math.max(0, Math.min(50, Math.round(input.max_votes_per_voter))),
       popularity_award_label: input.popularity_award_label.trim() || "인기상",
     })
     .eq("id", 1);

@@ -109,10 +109,10 @@ export default function DashboardControls({
             />
           </div>
           <div>
-            <label className="label">1인 최대 투표 수</label>
+            <label className="label">1인 최대 투표 수 (0 = 무제한)</label>
             <input
               type="number"
-              min={1}
+              min={0}
               max={50}
               className="input"
               value={maxVotes}

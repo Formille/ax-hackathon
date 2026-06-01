@@ -56,7 +56,14 @@ export default async function DisplayPage() {
               👥 참가 팀 <b className="text-white">{participants.length}</b>
             </span>
             <span className="rounded-xl bg-white/5 px-4 py-2">
-              🗳️ 1인 최대 <b className="text-white">{settings.max_votes_per_voter}</b>표
+              🗳️{" "}
+              {settings.max_votes_per_voter > 0 ? (
+                <>
+                  1인 최대 <b className="text-white">{settings.max_votes_per_voter}</b>표
+                </>
+              ) : (
+                <>여러 팀 투표 가능</>
+              )}
             </span>
           </div>
         </section>

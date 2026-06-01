@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { Logo } from "@/components/ui";
 import LoginForm from "./LoginForm";
 
@@ -10,9 +9,7 @@ export default function AdminLoginPage() {
       <div className="mb-8 flex justify-center">
         <Logo />
       </div>
-      <Suspense>
-        <LoginForm />
-      </Suspense>
+      <LoginForm />
     </main>
   );
 }

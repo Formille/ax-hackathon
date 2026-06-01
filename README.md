@@ -58,11 +58,11 @@ cp .env.example .env.local
 NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci... (또는 sb_publishable_...)
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGci...
-ADMIN_EMAILS=you@example.com          # 쉼표로 여러 명 가능
+ADMIN_PASSCODE=원하는-관리자-비밀번호
 NEXT_PUBLIC_SITE_URL=                  # 로컬은 비워두면 됨
 ```
 
-> ⚠️ `ADMIN_EMAILS` 가 비어 있으면 **아무도 관리자 로그인할 수 없습니다**(기본 차단).
+> ⚠️ `ADMIN_PASSCODE` 가 비어 있으면 **아무도 관리자 로그인할 수 없습니다**(기본 차단).
 
 ### 3) 실행
 
@@ -76,18 +76,14 @@ npm run dev      # http://localhost:3000
 ## Vercel 배포
 
 1. 이 저장소를 Vercel 프로젝트로 import
-2. **Environment Variables** 에 위 5개 변수를 모두 등록
+2. **Environment Variables** 에 위 환경 변수를 등록
    (`NEXT_PUBLIC_*` 는 빌드 시 인라인되므로 반드시 빌드 전에 등록)
 3. Deploy
 
-### Supabase Auth 설정 (관리자 매직 링크)
+### 관리자 로그인 (패스코드)
 
-Supabase 대시보드 **Authentication → URL Configuration** 에서:
-
-- **Site URL**: 배포 도메인 (예: `https://your-app.vercel.app`)
-- **Redirect URLs**: `https://your-app.vercel.app/auth/callback` 추가
-
-기본 이메일 템플릿이면 그대로 동작합니다. (PKCE `code` / `token_hash` 둘 다 처리)
+별도 Auth 설정이 필요 없습니다. `ADMIN_PASSCODE` 에 넣은 비밀번호를 `/admin` 로그인
+화면에 입력하면 됩니다. 값을 바꾸면 기존 로그인은 자동 무효화됩니다.
 
 ---
 

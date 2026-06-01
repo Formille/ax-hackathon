@@ -24,7 +24,7 @@ export default async function DashLayout({
             <PhasePill phase={settings.phase} />
           </div>
           <div className="mt-3">
-            <AdminNav email={user.email ?? ""} />
+            <AdminNav email={user.email ?? "관리자"} />
           </div>
         </div>
       </header>

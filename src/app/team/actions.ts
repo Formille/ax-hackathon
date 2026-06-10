@@ -10,6 +10,7 @@ export interface TeamInfo {
   project_name: string;
   tagline: string;
   description: string;
+  features: string;
   members: string;
   demo_url: string;
   thumbnail_url: string;
@@ -58,6 +59,7 @@ export async function getTeamWorkspace(
         project_name: p.project_name,
         tagline: p.tagline ?? "",
         description: p.description ?? "",
+        features: p.features ?? "",
         members: p.members ?? "",
         demo_url: p.demo_url ?? "",
         thumbnail_url: p.thumbnail_url ?? "",
@@ -78,6 +80,7 @@ export async function updateOwnParticipant(
     project_name: string;
     tagline: string;
     description: string;
+    features: string;
     members: string;
     demo_url: string;
     thumbnail_url: string;
@@ -99,6 +102,7 @@ export async function updateOwnParticipant(
       project_name,
       tagline: fields.tagline.trim() || null,
       description: fields.description.trim() || null,
+      features: fields.features.trim() || null,
       members: fields.members.trim() || null,
       demo_url: fields.demo_url.trim() || null,
       thumbnail_url: fields.thumbnail_url.trim() || null,

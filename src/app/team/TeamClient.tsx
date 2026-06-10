@@ -102,6 +102,7 @@ export default function TeamClient() {
       project_name: info.project_name,
       tagline: info.tagline,
       description: info.description,
+      features: info.features,
       members: info.members,
       demo_url: info.demo_url,
       thumbnail_url: info.thumbnail_url,
@@ -227,8 +228,17 @@ export default function TeamClient() {
           <input className="input" value={info.tagline} onChange={(e) => up({ tagline: e.target.value })} />
         </div>
         <div>
-          <label className="label">상세 설명</label>
+          <label className="label">상세 소개</label>
           <textarea className="input min-h-28" value={info.description} onChange={(e) => up({ description: e.target.value })} />
+        </div>
+        <div>
+          <label className="label">주요 기능</label>
+          <textarea
+            className="input min-h-28"
+            value={info.features}
+            onChange={(e) => up({ features: e.target.value })}
+            placeholder="한 줄에 하나씩 적으면 보기 좋아요"
+          />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>

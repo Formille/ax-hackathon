@@ -18,6 +18,7 @@ export interface Participant {
   project_name: string;
   tagline: string | null;
   description: string | null;
+  features: string | null;
   thumbnail_url: string | null;
   demo_url: string | null;
   members: string | null;

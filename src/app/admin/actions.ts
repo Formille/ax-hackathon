@@ -63,6 +63,7 @@ export interface ParticipantInput {
   project_name: string;
   tagline: string;
   description: string;
+  features: string;
   thumbnail_url: string;
   demo_url: string;
   members: string;
@@ -76,6 +77,7 @@ function cleanParticipant(input: ParticipantInput) {
     project_name: input.project_name.trim(),
     tagline: input.tagline.trim() || null,
     description: input.description.trim() || null,
+    features: input.features.trim() || null,
     thumbnail_url: input.thumbnail_url.trim() || null,
     demo_url: input.demo_url.trim() || null,
     members: input.members.trim() || null,
@@ -280,6 +282,13 @@ export async function drawRaffle(count: number): Promise<
 export async function resetRaffle() {
   const sb = await guard();
   await sb.from("raffle_entries").update({ is_winner: false }).eq("is_winner", true);
+  refresh();
+  return { ok: true as const };
+}
+
+export async function deleteRaffleEntry(id: string) {
+  const sb = await guard();
+  await sb.from("raffle_entries").delete().eq("id", id);
   refresh();
   return { ok: true as const };
 }

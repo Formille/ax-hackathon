@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Criterion } from "@/lib/types";
 import ScreenshotCarousel from "@/components/ScreenshotCarousel";
+import { cn } from "@/components/ui";
 import { clearJudgeCode, getJudgeCode, setJudgeCode } from "@/lib/tokens";
 import {
   getJudgeWorkspace,
@@ -12,7 +13,7 @@ import {
   type JudgeWorkspace,
 } from "./actions";
 
-type View = "loading" | "login" | "list" | "evaluate";
+type View = "loading" | "login" | "workspace";
 
 function weighted(criteria: Criterion[], scores: Record<string, number>) {
   let points = 0;
@@ -21,19 +22,23 @@ function weighted(criteria: Criterion[], scores: Record<string, number>) {
     points += (scores[c.id] ?? 0) * Number(c.weight);
     max += c.max_score * Number(c.weight);
   }
-  const pct = max > 0 ? Math.round((points / max) * 100) : 0;
-  return { points, max, pct };
+  return { pct: max > 0 ? Math.round((points / max) * 100) : 0 };
+}
+
+function statusOf(ev?: JudgeEvalState) {
+  if (ev?.submitted) return { label: "제출완료", cls: "bg-accent/20 text-accent" };
+  if (ev) return { label: "임시저장", cls: "bg-gold/20 text-gold" };
+  return { label: "미평가", cls: "bg-white/10 text-white/50" };
 }
 
 export default function JudgeClient() {
   const [view, setView] = useState<View>("loading");
   const [code, setCode] = useState("");
   const [ws, setWs] = useState<JudgeWorkspace | null>(null);
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  // draft for the participant being evaluated
   const [draftScores, setDraftScores] = useState<Record<string, number>>({});
   const [draftScoreComments, setDraftScoreComments] = useState<Record<string, string>>({});
   const [draftComment, setDraftComment] = useState("");
@@ -45,7 +50,7 @@ export default function JudgeClient() {
       if (res.ok) {
         setCode(saved);
         setWs(res.data);
-        setView("list");
+        setView("workspace");
       } else {
         clearJudgeCode();
         setView("login");
@@ -71,24 +76,23 @@ export default function JudgeClient() {
     if (!res.ok) return flash(res.error);
     setJudgeCode(code.trim());
     setWs(res.data);
-    setView("list");
+    setView("workspace");
   }
 
-  function openEvaluate(pid: string) {
+  function select(pid: string) {
     const ev = ws?.evaluations[pid];
-    setActiveId(pid);
+    setSelectedId(pid);
     setDraftScores({ ...(ev?.scores ?? {}) });
     setDraftScoreComments({ ...(ev?.scoreComments ?? {}) });
     setDraftComment(ev?.comment ?? "");
-    setView("evaluate");
   }
 
   async function persist(submitted: boolean) {
-    if (!ws || !activeId) return;
+    if (!ws || !selectedId) return;
     setBusy(true);
     const res = await saveEvaluation({
       code,
-      participantId: activeId,
+      participantId: selectedId,
       comment: draftComment,
       submitted,
       scores: ws.criteria.map((c) => ({
@@ -106,9 +110,8 @@ export default function JudgeClient() {
       scores: { ...draftScores },
       scoreComments: { ...draftScoreComments },
     };
-    setWs({ ...ws, evaluations: { ...ws.evaluations, [activeId]: next } });
+    setWs({ ...ws, evaluations: { ...ws.evaluations, [selectedId]: next } });
     flash(submitted ? "제출되었습니다 ✓" : "임시저장되었습니다");
-    if (submitted) setView("list");
   }
 
   if (view === "loading") {
@@ -143,97 +146,182 @@ export default function JudgeClient() {
 
   if (!ws) return null;
 
-  if (view === "list") {
-    const submittedCount = ws.participants.filter(
-      (p) => ws.evaluations[p.id]?.submitted,
-    ).length;
-    return (
-      <section className="mt-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">{ws.judge.name} 님</h1>
-            <p className="text-sm text-white/55">
-              {submittedCount}/{ws.participants.length} 팀 제출 완료
-            </p>
-          </div>
-          <button
-            className="btn-ghost text-sm"
-            onClick={() => {
-              clearJudgeCode();
-              setWs(null);
-              setCode("");
-              setView("login");
-            }}
-          >
-            로그아웃
-          </button>
-        </div>
-
-        {!ws.judgingOpen && (
-          <div className="mt-4 rounded-xl border border-gold/30 bg-gold/10 px-4 py-3 text-sm text-gold">
-            심사가 마감되어 점수를 더 이상 수정할 수 없습니다.
-          </div>
-        )}
-
-        <ul className="mt-5 space-y-3">
-          {ws.participants.map((p) => {
-            const ev = ws.evaluations[p.id];
-            const w = ev ? weighted(ws.criteria, ev.scores) : null;
-            const status = ev?.submitted
-              ? { label: "제출완료", cls: "bg-accent/20 text-accent" }
-              : ev
-                ? { label: "임시저장", cls: "bg-gold/20 text-gold" }
-                : { label: "미평가", cls: "bg-white/10 text-white/50" };
-            return (
-              <li key={p.id} className="card flex items-center gap-4 p-4">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-brand-soft">{p.team_name}</p>
-                  <h3 className="truncate text-lg font-bold">{p.project_name}</h3>
-                  <span className={`pill mt-1 ${status.cls}`}>{status.label}</span>
-                  {w && (
-                    <span className="ml-2 text-sm text-white/50">{w.pct}점</span>
-                  )}
-                </div>
-                <button className="btn-ghost shrink-0" onClick={() => openEvaluate(p.id)}>
-                  {ev ? "수정" : "평가하기"}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-        <Toast message={toast} />
-      </section>
-    );
-  }
-
-  // view === "evaluate"
-  const participant = ws.participants.find((p) => p.id === activeId)!;
-  const w = weighted(ws.criteria, draftScores);
+  const submittedCount = ws.participants.filter((p) => ws.evaluations[p.id]?.submitted).length;
   const locked = !ws.judgingOpen;
+  const sel = selectedId ? ws.participants.find((p) => p.id === selectedId) ?? null : null;
 
   return (
-    <section className="mt-6 pb-10">
-      <button className="text-sm text-white/50" onClick={() => setView("list")}>
+    <section className="mt-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold">{ws.judge.name} 님</h1>
+          <p className="text-sm text-white/55">
+            {submittedCount}/{ws.participants.length} 팀 제출 완료
+          </p>
+        </div>
+        <button
+          className="btn-ghost text-sm"
+          onClick={() => {
+            clearJudgeCode();
+            setWs(null);
+            setCode("");
+            setSelectedId(null);
+            setView("login");
+          }}
+        >
+          로그아웃
+        </button>
+      </div>
+
+      {locked && (
+        <div className="mt-4 rounded-xl border border-gold/30 bg-gold/10 px-4 py-3 text-sm text-gold">
+          심사가 마감되어 점수를 더 이상 수정할 수 없습니다.
+        </div>
+      )}
+
+      <div className="mt-5 md:grid md:grid-cols-[280px_1fr] md:gap-6">
+        {/* left: participant list */}
+        <aside
+          className={cn(
+            "md:sticky md:top-4 md:max-h-[85vh] md:overflow-y-auto",
+            sel ? "hidden md:block" : "block",
+          )}
+        >
+          <ul className="space-y-2">
+            {ws.participants.map((p) => {
+              const ev = ws.evaluations[p.id];
+              const st = statusOf(ev);
+              const active = p.id === selectedId;
+              return (
+                <li key={p.id}>
+                  <button
+                    onClick={() => select(p.id)}
+                    className={cn(
+                      "w-full rounded-xl border p-3 text-left transition",
+                      active
+                        ? "border-brand bg-brand/10"
+                        : "border-white/10 bg-ink-card hover:border-white/25",
+                    )}
+                  >
+                    <p className="truncate font-bold">{p.project_name}</p>
+                    {p.tagline && (
+                      <p className="truncate text-xs text-white/45">{p.tagline}</p>
+                    )}
+                    <span className={cn("pill mt-1.5", st.cls)}>{st.label}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </aside>
+
+        {/* right: detail + evaluation */}
+        <main className={cn(sel ? "block" : "hidden md:block")}>
+          {!sel ? (
+            <div className="hidden h-full place-items-center rounded-2xl border border-dashed border-white/10 p-10 text-center text-white/40 md:grid">
+              왼쪽에서 평가할 팀을 선택하세요.
+            </div>
+          ) : (
+            <Detail
+              key={sel.id}
+              ws={ws}
+              participantId={sel.id}
+              locked={locked}
+              draftScores={draftScores}
+              draftScoreComments={draftScoreComments}
+              draftComment={draftComment}
+              setDraftScores={setDraftScores}
+              setDraftScoreComments={setDraftScoreComments}
+              setDraftComment={setDraftComment}
+              busy={busy}
+              onBack={() => setSelectedId(null)}
+              onSave={persist}
+            />
+          )}
+        </main>
+      </div>
+      <Toast message={toast} />
+    </section>
+  );
+}
+
+function Detail({
+  ws,
+  participantId,
+  locked,
+  draftScores,
+  draftScoreComments,
+  draftComment,
+  setDraftScores,
+  setDraftScoreComments,
+  setDraftComment,
+  busy,
+  onBack,
+  onSave,
+}: {
+  ws: JudgeWorkspace;
+  participantId: string;
+  locked: boolean;
+  draftScores: Record<string, number>;
+  draftScoreComments: Record<string, string>;
+  draftComment: string;
+  setDraftScores: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  setDraftScoreComments: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  setDraftComment: (v: string) => void;
+  busy: boolean;
+  onBack: () => void;
+  onSave: (submitted: boolean) => void;
+}) {
+  const p = ws.participants.find((x) => x.id === participantId)!;
+  const shots = ws.screenshots[participantId] ?? [];
+  const w = weighted(ws.criteria, draftScores);
+
+  return (
+    <div className="pb-10">
+      <button className="mb-3 text-sm text-white/50 md:hidden" onClick={onBack}>
         ← 목록으로
       </button>
-      <div className="mt-3 flex items-end justify-between">
-        <div>
-          <p className="text-xs text-brand-soft">{participant.team_name}</p>
-          <h1 className="text-2xl font-bold">{participant.project_name}</h1>
+
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs text-brand-soft">{p.team_name}</p>
+          <h2 className="text-2xl font-bold">{p.project_name}</h2>
+          {p.tagline && <p className="mt-1 text-sm text-white/55">{p.tagline}</p>}
         </div>
-        <div className="text-right">
+        <div className="shrink-0 text-right">
           <p className="text-3xl font-black text-brand-soft">{w.pct}</p>
           <p className="text-xs text-white/40">가중 점수</p>
         </div>
       </div>
-      {participant.tagline && (
-        <p className="mt-1 text-sm text-white/55">{participant.tagline}</p>
+
+      {shots.length > 0 && <ScreenshotCarousel shots={shots} />}
+
+      {p.features && (
+        <div className="mt-4 card p-4">
+          <h3 className="text-sm font-bold text-white/80">주요 기능</h3>
+          <p className="mt-1 whitespace-pre-wrap text-sm text-white/70">{p.features}</p>
+        </div>
       )}
-      {(ws.screenshots[participant.id]?.length ?? 0) > 0 && (
-        <ScreenshotCarousel shots={ws.screenshots[participant.id] ?? []} />
+      {p.description && (
+        <div className="mt-3 card p-4">
+          <h3 className="text-sm font-bold text-white/80">상세 소개</h3>
+          <p className="mt-1 whitespace-pre-wrap text-sm text-white/70">{p.description}</p>
+        </div>
+      )}
+      {(p.members || p.demo_url) && (
+        <p className="mt-3 text-xs text-white/40">
+          {p.members && <>팀원 · {p.members}</>}
+          {p.members && p.demo_url && "　"}
+          {p.demo_url && (
+            <a href={p.demo_url} target="_blank" rel="noreferrer" className="text-brand-soft underline">
+              데모 링크 →
+            </a>
+          )}
+        </p>
       )}
 
-      <div className="mt-6 space-y-5">
+      <h3 className="mt-6 font-bold">평가</h3>
+      <div className="mt-2 space-y-4">
         {ws.criteria.map((c) => {
           const val = draftScores[c.id] ?? 0;
           return (
@@ -241,13 +329,9 @@ export default function JudgeClient() {
               <div className="flex items-baseline justify-between">
                 <div>
                   <h4 className="font-bold">{c.label}</h4>
-                  {c.description && (
-                    <p className="text-xs text-white/45">{c.description}</p>
-                  )}
+                  {c.description && <p className="text-xs text-white/45">{c.description}</p>}
                 </div>
-                <span className="text-sm text-white/40">
-                  가중치 ×{Number(c.weight)}
-                </span>
+                <span className="text-sm text-white/40">가중치 ×{Number(c.weight)}</span>
               </div>
               <div className="mt-3 flex items-center gap-4">
                 <input
@@ -264,9 +348,7 @@ export default function JudgeClient() {
                 />
                 <span className="w-14 shrink-0 text-right text-lg font-bold tabular-nums">
                   {val}
-                  <span className="text-sm font-normal text-white/40">
-                    /{c.max_score}
-                  </span>
+                  <span className="text-sm font-normal text-white/40">/{c.max_score}</span>
                 </span>
               </div>
               <input
@@ -296,24 +378,15 @@ export default function JudgeClient() {
 
       {!locked && (
         <div className="mt-6 flex gap-3">
-          <button
-            className="btn-ghost flex-1"
-            disabled={busy}
-            onClick={() => persist(false)}
-          >
+          <button className="btn-ghost flex-1" disabled={busy} onClick={() => onSave(false)}>
             임시저장
           </button>
-          <button
-            className="btn-primary flex-1"
-            disabled={busy}
-            onClick={() => persist(true)}
-          >
+          <button className="btn-primary flex-1" disabled={busy} onClick={() => onSave(true)}>
             제출하기
           </button>
         </div>
       )}
-      <Toast message={toast} />
-    </section>
+    </div>
   );
 }
 

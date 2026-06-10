@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { RaffleEntry } from "@/lib/types";
-import { drawRaffle, raffleCsv, resetRaffle } from "../../actions";
+import { deleteRaffleEntry, drawRaffle, raffleCsv, resetRaffle } from "../../actions";
 
 export default function RaffleClient({ entries }: { entries: RaffleEntry[] }) {
   const router = useRouter();
@@ -35,6 +35,14 @@ export default function RaffleClient({ entries }: { entries: RaffleEntry[] }) {
     await resetRaffle();
     setBusy(false);
     setLast(null);
+    router.refresh();
+  }
+
+  async function removeEntry(id: string, name: string) {
+    if (!confirm(`'${name}' 응모자를 삭제할까요? (테스트 계정 정리용)`)) return;
+    setBusy(true);
+    await deleteRaffleEntry(id);
+    setBusy(false);
     router.refresh();
   }
 
@@ -125,6 +133,7 @@ export default function RaffleClient({ entries }: { entries: RaffleEntry[] }) {
               <th className="py-2 pr-2">소속</th>
               <th className="py-2 pr-2 text-center">참여</th>
               <th className="py-2 pr-2 text-center">당첨</th>
+              <th className="py-2 pr-2 text-right">관리</th>
             </tr>
           </thead>
           <tbody>
@@ -135,6 +144,15 @@ export default function RaffleClient({ entries }: { entries: RaffleEntry[] }) {
                 <td className="py-2 pr-2 text-center">{e.participated ? "✓" : "-"}</td>
                 <td className="py-2 pr-2 text-center">
                   {e.is_winner ? <span className="text-gold">🏅</span> : "-"}
+                </td>
+                <td className="py-2 pr-2 text-right">
+                  <button
+                    className="text-xs text-red-400 hover:text-red-300"
+                    disabled={busy}
+                    onClick={() => removeEntry(e.id, e.name)}
+                  >
+                    삭제
+                  </button>
                 </td>
               </tr>
             ))}

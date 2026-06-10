@@ -218,6 +218,7 @@ export default function VoteClient({
                 </button>
               </div>
               {(p.description ||
+                p.features ||
                 (screenshots[p.id]?.length ?? 0) > 0 ||
                 p.members ||
                 p.demo_url) && (
@@ -230,6 +231,12 @@ export default function VoteClient({
                   )}
                   {p.description && (
                     <p className="mt-2 whitespace-pre-wrap">{p.description}</p>
+                  )}
+                  {p.features && (
+                    <div className="mt-2">
+                      <p className="text-xs font-semibold text-white/70">주요 기능</p>
+                      <p className="whitespace-pre-wrap">{p.features}</p>
+                    </div>
                   )}
                   {p.members && (
                     <p className="mt-2 text-xs text-white/40">팀원 · {p.members}</p>

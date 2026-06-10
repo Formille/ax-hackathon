@@ -16,6 +16,7 @@ const EMPTY: ParticipantInput = {
   project_name: "",
   tagline: "",
   description: "",
+  features: "",
   thumbnail_url: "",
   demo_url: "",
   members: "",
@@ -29,6 +30,7 @@ function toInput(p: Participant): ParticipantInput {
     project_name: p.project_name,
     tagline: p.tagline ?? "",
     description: p.description ?? "",
+    features: p.features ?? "",
     thumbnail_url: p.thumbnail_url ?? "",
     demo_url: p.demo_url ?? "",
     members: p.members ?? "",
@@ -243,11 +245,20 @@ function Form({
         />
       </div>
       <div>
-        <label className="label">상세 설명</label>
+        <label className="label">상세 소개</label>
         <textarea
           className="input min-h-24"
           value={draft.description}
           onChange={(e) => up({ description: e.target.value })}
+        />
+      </div>
+      <div>
+        <label className="label">주요 기능</label>
+        <textarea
+          className="input min-h-24"
+          value={draft.features}
+          onChange={(e) => up({ features: e.target.value })}
+          placeholder="한 줄에 하나씩 적으면 보기 좋아요"
         />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">

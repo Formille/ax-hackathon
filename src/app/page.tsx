@@ -15,21 +15,21 @@ const TILES = [
   {
     href: "/judge",
     emoji: "⚖️",
-    title: "심사하기",
+    title: "심사위원 페이지",
     desc: "심사위원 코드로 입장",
     ring: "hover:border-accent/60",
   },
   {
     href: "/team",
     emoji: "👥",
-    title: "참가팀",
+    title: "참가팀 페이지",
     desc: "내 정보·스크린샷 관리",
     ring: "hover:border-gold/60",
   },
   {
     href: "/display",
     emoji: "📺",
-    title: "현황판 · QR",
+    title: "QR 이미지",
     desc: "대형 화면 / 참여 QR",
     ring: "hover:border-gold/60",
   },
@@ -48,21 +48,17 @@ export default async function Home() {
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col px-5 py-10">
       <header className="flex items-center justify-between">
-        <Logo />
+        <Logo name={settings.event_name} />
         <PhasePill phase={settings.phase} />
       </header>
 
       <div className="flex flex-1 flex-col justify-center py-16">
         <p className="text-sm font-semibold uppercase tracking-widest text-brand-soft">
-          Live Hackathon
+          가치 실천의 달
         </p>
         <h1 className="mt-2 text-4xl font-black leading-tight sm:text-5xl">
           {settings.event_name}
         </h1>
-        <p className="mt-4 max-w-lg text-white/60">
-          관객 투표, 심사위원 평가, 경품 추첨까지 — 행사 진행에 필요한 모든 것을 한
-          화면에서.
-        </p>
 
         <div className="mt-10 grid grid-cols-2 gap-3 sm:gap-4">
           {TILES.map((t) => (
@@ -82,7 +78,7 @@ export default async function Home() {
       </div>
 
       <footer className="text-center text-xs text-white/30">
-        Hackathon Arena · Vercel × Supabase
+        문의: 디지털솔루션팀 나찬희 프로
       </footer>
     </main>
   );

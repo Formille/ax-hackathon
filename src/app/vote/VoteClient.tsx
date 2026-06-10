@@ -161,7 +161,7 @@ export default function VoteClient({
   return (
     <section className="mt-6">
       <div className="flex items-end justify-between">
-        <h1 className="text-2xl font-bold">마음에 드는 팀에 투표하세요</h1>
+        <h1 className="text-2xl font-bold">좋은 아이디어에 투표하세요</h1>
       </div>
       <p className="mt-1 text-sm text-white/55">
         {maxVotes > 0 ? (

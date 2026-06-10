@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Phase } from "@/lib/types";
 import { PHASE_LABELS } from "@/lib/types";
 
@@ -23,11 +24,11 @@ export function PhasePill({ phase }: { phase: Phase }) {
 
 export function Logo({ name }: { name?: string }) {
   return (
-    <div className="flex items-center gap-2.5">
+    <Link href="/" className="flex items-center gap-2.5">
       <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand text-lg font-black text-white shadow-lg shadow-brand/30">
         ⚡
       </span>
       <span className="text-lg font-bold tracking-tight">{name ?? "해커톤 아레나"}</span>
-    </div>
+    </Link>
   );
 }

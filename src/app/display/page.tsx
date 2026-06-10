@@ -70,8 +70,9 @@ export default async function DisplayPage() {
 
         <section className="flex flex-col items-center">
           <QrCode value={joinUrl} size={300} />
-          <p className="mt-5 text-center text-2xl font-bold">스캔하여 참여</p>
-          <p className="mt-1 break-all text-center font-mono text-white/50">{joinUrl}</p>
+          <p className="mt-5 text-center text-3xl font-black">📱 모바일로 투표 가능</p>
+          <p className="mt-1 text-center text-xl text-white/55">QR을 스캔하여 참여하세요</p>
+          <p className="mt-2 break-all text-center font-mono text-white/50">{joinUrl}</p>
         </section>
       </div>
     </main>

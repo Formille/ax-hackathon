@@ -1,14 +1,15 @@
 import Link from "next/link";
-import { getParticipants, getSettings } from "@/lib/data";
+import { getParticipants, getScreenshotsByParticipant, getSettings } from "@/lib/data";
 import { Logo, PhasePill } from "@/components/ui";
 import VoteClient from "./VoteClient";
 
 export const dynamic = "force-dynamic";
 
 export default async function VotePage() {
-  const [settings, participants] = await Promise.all([
+  const [settings, participants, screenshots] = await Promise.all([
     getSettings(),
     getParticipants({ publishedOnly: true }),
+    getScreenshotsByParticipant(),
   ]);
 
   return (
@@ -31,6 +32,7 @@ export default async function VotePage() {
           participants={participants}
           maxVotes={settings.max_votes_per_voter}
           awardLabel={settings.popularity_award_label}
+          screenshots={screenshots}
         />
       )}
 

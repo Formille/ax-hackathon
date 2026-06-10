@@ -89,9 +89,18 @@ export async function createParticipant(input: ParticipantInput) {
   const row = cleanParticipant(input);
   if (!row.team_name || !row.project_name)
     return { ok: false as const, error: "팀명과 프로젝트명은 필수입니다." };
-  await sb.from("participants").insert(row);
+  const code = await uniqueCode(sb, "TEAM");
+  await sb.from("participants").insert({ ...row, code });
   refresh();
   return { ok: true as const };
+}
+
+export async function regenerateParticipantCode(id: string) {
+  const sb = await guard();
+  const code = await uniqueCode(sb, "TEAM");
+  await sb.from("participants").update({ code }).eq("id", id);
+  refresh();
+  return { ok: true as const, code };
 }
 
 export async function updateParticipant(id: string, input: ParticipantInput) {
@@ -157,26 +166,30 @@ export async function deleteCriterion(id: string) {
 
 // -------------------------------------------------------------------- judges
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-function genCode() {
+function randomCode(prefix: string) {
   let s = "";
   for (let i = 0; i < 5; i++)
     s += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
-  return `JUDGE-${s}`;
+  return `${prefix}-${s}`;
 }
 
-async function uniqueCode(sb: ReturnType<typeof createServiceClient>) {
+async function uniqueCode(
+  sb: ReturnType<typeof createServiceClient>,
+  prefix: "JUDGE" | "TEAM",
+) {
+  const table = prefix === "JUDGE" ? "judges" : "participants";
   for (let i = 0; i < 8; i++) {
-    const code = genCode();
-    const { data } = await sb.from("judges").select("id").eq("code", code).maybeSingle();
+    const code = randomCode(prefix);
+    const { data } = await sb.from(table).select("id").eq("code", code).maybeSingle();
     if (!data) return code;
   }
-  return `JUDGE-${Date.now().toString(36).toUpperCase()}`;
+  return `${prefix}-${Date.now().toString(36).toUpperCase()}`;
 }
 
 export async function createJudge(name: string) {
   const sb = await guard();
   if (!name.trim()) return { ok: false as const, error: "심사위원 이름을 입력해 주세요." };
-  const code = await uniqueCode(sb);
+  const code = await uniqueCode(sb, "JUDGE");
   await sb.from("judges").insert({ name: name.trim(), code });
   refresh();
   return { ok: true as const, code };
@@ -194,7 +207,7 @@ export async function updateJudge(id: string, input: { name: string; active: boo
 
 export async function regenerateJudgeCode(id: string) {
   const sb = await guard();
-  const code = await uniqueCode(sb);
+  const code = await uniqueCode(sb, "JUDGE");
   await sb.from("judges").update({ code }).eq("id", id);
   refresh();
   return { ok: true as const, code };

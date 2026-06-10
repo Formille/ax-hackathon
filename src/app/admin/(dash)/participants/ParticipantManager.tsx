@@ -6,6 +6,7 @@ import type { Participant } from "@/lib/types";
 import {
   createParticipant,
   deleteParticipant,
+  regenerateParticipantCode,
   updateParticipant,
   type ParticipantInput,
 } from "../../actions";
@@ -46,6 +47,21 @@ export default function ParticipantManager({
   const [draft, setDraft] = useState<ParticipantInput>(EMPTY);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+
+  function copy(code: string) {
+    navigator.clipboard?.writeText(code);
+    setCopied(code);
+    setTimeout(() => setCopied(null), 1500);
+  }
+
+  async function regenCode(id: string) {
+    if (!confirm("이 팀의 코드를 재발급할까요? 기존 코드는 사용할 수 없게 됩니다.")) return;
+    setBusy(true);
+    await regenerateParticipantCode(id);
+    setBusy(false);
+    router.refresh();
+  }
 
   function startNew() {
     setDraft({ ...EMPTY, display_order: participants.length + 1 });
@@ -83,9 +99,16 @@ export default function ParticipantManager({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">참가팀 ({participants.length})</h1>
+        <div>
+          <h1 className="text-2xl font-bold">참가팀 ({participants.length})</h1>
+          <p className="text-sm text-white/50">
+            각 팀에 <span className="font-mono text-white/70">코드</span>와{" "}
+            <span className="font-mono text-white/70">/team</span> 링크를 전달하면 팀이
+            직접 정보·스크린샷을 수정합니다.
+          </p>
+        </div>
         {editing !== "new" && (
-          <button className="btn-primary" onClick={startNew}>
+          <button className="btn-primary shrink-0" onClick={startNew}>
             + 팀 추가
           </button>
         )}
@@ -131,6 +154,27 @@ export default function ParticipantManager({
                   </p>
                   {p.tagline && (
                     <p className="truncate text-sm text-white/45">{p.tagline}</p>
+                  )}
+                  {p.code && (
+                    <div className="mt-1 flex items-center gap-2">
+                      <button
+                        onClick={() => copy(p.code!)}
+                        className="rounded bg-black/30 px-2 py-0.5 font-mono text-xs tracking-wider text-brand-soft hover:bg-black/50"
+                        title="클릭하여 복사"
+                      >
+                        {p.code}
+                      </button>
+                      <span className="text-xs text-white/30">
+                        {copied === p.code ? "복사됨 ✓" : ""}
+                      </span>
+                      <button
+                        onClick={() => regenCode(p.id)}
+                        disabled={busy}
+                        className="text-xs text-white/35 hover:text-white/70"
+                      >
+                        재발급
+                      </button>
+                    </div>
                   )}
                 </div>
                 <button className="btn-ghost px-3 py-1.5 text-sm" onClick={() => startEdit(p)}>

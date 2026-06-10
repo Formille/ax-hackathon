@@ -33,3 +33,17 @@ export function clearJudgeCode() {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(JUDGE_KEY);
 }
+
+const TEAM_KEY = "ha_team_code";
+export function getTeamCode(): string {
+  if (typeof window === "undefined") return "";
+  return window.localStorage.getItem(TEAM_KEY) ?? "";
+}
+export function setTeamCode(code: string) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(TEAM_KEY, code);
+}
+export function clearTeamCode() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(TEAM_KEY);
+}

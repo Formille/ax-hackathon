@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { Criterion } from "@/lib/types";
+import ScreenshotCarousel from "@/components/ScreenshotCarousel";
 import { clearJudgeCode, getJudgeCode, setJudgeCode } from "@/lib/tokens";
 import {
   getJudgeWorkspace,
@@ -227,6 +228,9 @@ export default function JudgeClient() {
       </div>
       {participant.tagline && (
         <p className="mt-1 text-sm text-white/55">{participant.tagline}</p>
+      )}
+      {(ws.screenshots[participant.id]?.length ?? 0) > 0 && (
+        <ScreenshotCarousel shots={ws.screenshots[participant.id] ?? []} />
       )}
 
       <div className="mt-6 space-y-5">

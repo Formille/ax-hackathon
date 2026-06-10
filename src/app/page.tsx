@@ -20,6 +20,13 @@ const TILES = [
     ring: "hover:border-accent/60",
   },
   {
+    href: "/team",
+    emoji: "👥",
+    title: "참가팀",
+    desc: "내 정보·스크린샷 관리",
+    ring: "hover:border-gold/60",
+  },
+  {
     href: "/display",
     emoji: "📺",
     title: "현황판 · QR",

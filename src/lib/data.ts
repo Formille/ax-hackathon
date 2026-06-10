@@ -1,7 +1,8 @@
 import "server-only";
 
 import { createServiceClient } from "./supabase/server";
-import type { Criterion, Participant, Settings } from "./types";
+import { screenshotUrl } from "./storage";
+import type { Criterion, Participant, ScreenshotView, Settings } from "./types";
 
 const DEFAULT_SETTINGS: Settings = {
   id: 1,
@@ -34,4 +35,25 @@ export async function getCriteria(): Promise<Criterion[]> {
   const sb = createServiceClient();
   const { data } = await sb.from("criteria").select("*").order("display_order");
   return (data ?? []) as Criterion[];
+}
+
+/** Screenshots grouped by participant id, ordered for display. */
+export async function getScreenshotsByParticipant(): Promise<
+  Record<string, ScreenshotView[]>
+> {
+  const sb = createServiceClient();
+  const { data } = await sb
+    .from("screenshots")
+    .select("id,participant_id,storage_path,caption,display_order")
+    .order("display_order", { ascending: true });
+
+  const map: Record<string, ScreenshotView[]> = {};
+  for (const s of data ?? []) {
+    (map[s.participant_id as string] ??= []).push({
+      id: s.id as string,
+      url: screenshotUrl(s.storage_path as string),
+      caption: (s.caption as string) ?? null,
+    });
+  }
+  return map;
 }

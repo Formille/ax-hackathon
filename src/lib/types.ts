@@ -22,7 +22,24 @@ export interface Participant {
   demo_url: string | null;
   members: string | null;
   published: boolean;
+  code: string | null;
   created_at: string;
+}
+
+export interface Screenshot {
+  id: string;
+  participant_id: string;
+  storage_path: string;
+  caption: string | null;
+  display_order: number;
+  created_at: string;
+}
+
+/** A screenshot ready for display (public URL resolved). */
+export interface ScreenshotView {
+  id: string;
+  url: string;
+  caption: string | null;
 }
 
 export interface Judge {

@@ -1,8 +1,8 @@
 "use server";
 
 import { createServiceClient } from "@/lib/supabase/server";
-import { getSettings } from "@/lib/data";
-import type { Criterion, Participant } from "@/lib/types";
+import { getScreenshotsByParticipant, getSettings } from "@/lib/data";
+import type { Criterion, Participant, ScreenshotView } from "@/lib/types";
 
 export interface JudgeEvalState {
   comment: string;
@@ -17,6 +17,7 @@ export interface JudgeWorkspace {
   participants: Participant[];
   criteria: Criterion[];
   evaluations: Record<string, JudgeEvalState>; // participantId -> state
+  screenshots: Record<string, ScreenshotView[]>; // participantId -> screenshots
 }
 
 async function findJudge(code: string) {
@@ -87,6 +88,8 @@ export async function getJudgeWorkspace(
     if (s.comment) evaluations[pid].scoreComments[s.criterion_id] = s.comment;
   }
 
+  const screenshots = await getScreenshotsByParticipant();
+
   return {
     ok: true,
     data: {
@@ -95,6 +98,7 @@ export async function getJudgeWorkspace(
       participants: (participants ?? []) as Participant[],
       criteria: (criteria ?? []) as Criterion[],
       evaluations,
+      screenshots,
     },
   };
 }

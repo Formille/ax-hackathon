@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Participant } from "@/lib/types";
+import type { Participant, ScreenshotView } from "@/lib/types";
+import ScreenshotCarousel from "@/components/ScreenshotCarousel";
 import { getRaffleToken, getVoteToken } from "@/lib/tokens";
 import {
   castVote,
@@ -19,10 +20,12 @@ export default function VoteClient({
   participants,
   maxVotes,
   awardLabel,
+  screenshots,
 }: {
   participants: Participant[];
   maxVotes: number;
   awardLabel: string;
+  screenshots: Record<string, ScreenshotView[]>;
 }) {
   const [step, setStep] = useState<Step>("loading");
   const [name, setName] = useState("");
@@ -214,12 +217,20 @@ export default function VoteClient({
                   {on ? "✓ 선택됨" : "투표"}
                 </button>
               </div>
-              {p.description && (
+              {(p.description ||
+                (screenshots[p.id]?.length ?? 0) > 0 ||
+                p.members ||
+                p.demo_url) && (
                 <details className="border-t border-white/10 px-4 py-2.5 text-sm text-white/55">
                   <summary className="cursor-pointer select-none text-white/70">
                     자세히 보기
                   </summary>
-                  <p className="mt-2 whitespace-pre-wrap">{p.description}</p>
+                  {(screenshots[p.id]?.length ?? 0) > 0 && (
+                    <ScreenshotCarousel shots={screenshots[p.id] ?? []} />
+                  )}
+                  {p.description && (
+                    <p className="mt-2 whitespace-pre-wrap">{p.description}</p>
+                  )}
                   {p.members && (
                     <p className="mt-2 text-xs text-white/40">팀원 · {p.members}</p>
                   )}

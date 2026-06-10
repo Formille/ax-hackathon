@@ -40,12 +40,20 @@ export async function getJudgeResults(): Promise<{
     getParticipants({ publishedOnly: true }),
   ]);
 
-  const { data: evals } = await sb
-    .from("evaluations")
-    .select("id,participant_id,judge_id,submitted")
-    .eq("submitted", true);
+  const [{ data: evals }, { data: judges }] = await Promise.all([
+    sb
+      .from("evaluations")
+      .select("id,participant_id,judge_id,submitted")
+      .eq("submitted", true),
+    sb.from("judges").select("id,weight"),
+  ]);
   const evalRows = evals ?? [];
   const evalIds = evalRows.map((e) => e.id as string);
+
+  // judge_id -> weight (defaults to 1)
+  const judgeWeight = new Map(
+    (judges ?? []).map((j) => [j.id as string, Number(j.weight)]),
+  );
 
   const { data: scores } = evalIds.length
     ? await sb
@@ -60,30 +68,34 @@ export async function getJudgeResults(): Promise<{
     scoresByEval.get(s.evaluation_id)!.set(s.criterion_id, Number(s.score));
   }
 
-  const weightSum = criteria.reduce((a, c) => a + c.max_score * Number(c.weight), 0);
+  const maxWeighted = criteria.reduce((a, c) => a + c.max_score * Number(c.weight), 0);
 
   type Acc = {
-    pctSum: number;
+    pctSum: number; // Σ (judgePct × judgeWeight)
+    wSum: number; // Σ judgeWeight
     judgeCount: number;
-    crit: Map<string, { sum: number; n: number }>;
+    crit: Map<string, { sum: number; wsum: number }>;
   };
   const accs = new Map<string, Acc>();
-  for (const p of participants) accs.set(p.id, { pctSum: 0, judgeCount: 0, crit: new Map() });
+  for (const p of participants)
+    accs.set(p.id, { pctSum: 0, wSum: 0, judgeCount: 0, crit: new Map() });
 
   for (const e of evalRows) {
     const acc = accs.get(e.participant_id as string);
     if (!acc) continue;
+    const wj = judgeWeight.get(e.judge_id as string) ?? 1;
     const sc = scoresByEval.get(e.id as string) ?? new Map<string, number>();
     let points = 0;
     for (const c of criteria) {
       const v = sc.get(c.id) ?? 0;
       points += v * Number(c.weight);
-      const cc = acc.crit.get(c.id) ?? { sum: 0, n: 0 };
-      cc.sum += v;
-      cc.n += 1;
+      const cc = acc.crit.get(c.id) ?? { sum: 0, wsum: 0 };
+      cc.sum += v * wj;
+      cc.wsum += wj;
       acc.crit.set(c.id, cc);
     }
-    acc.pctSum += weightSum > 0 ? (points / weightSum) * 100 : 0;
+    acc.pctSum += (maxWeighted > 0 ? (points / maxWeighted) * 100 : 0) * wj;
+    acc.wSum += wj;
     acc.judgeCount += 1;
   }
 
@@ -93,11 +105,11 @@ export async function getJudgeResults(): Promise<{
       const perCriterion: Record<string, number> = {};
       for (const c of criteria) {
         const cc = a.crit.get(c.id);
-        perCriterion[c.id] = cc && cc.n > 0 ? cc.sum / cc.n : 0;
+        perCriterion[c.id] = cc && cc.wsum > 0 ? cc.sum / cc.wsum : 0;
       }
       return {
         participant: p,
-        pct: a.judgeCount > 0 ? a.pctSum / a.judgeCount : 0,
+        pct: a.wSum > 0 ? a.pctSum / a.wSum : 0,
         judgeCount: a.judgeCount,
         perCriterion,
       };

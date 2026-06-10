@@ -48,6 +48,7 @@ export interface Judge {
   name: string;
   code: string;
   active: boolean;
+  weight: number;
   created_at: string;
 }
 

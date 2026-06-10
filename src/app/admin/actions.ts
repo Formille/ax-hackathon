@@ -197,11 +197,18 @@ export async function createJudge(name: string) {
   return { ok: true as const, code };
 }
 
-export async function updateJudge(id: string, input: { name: string; active: boolean }) {
+export async function updateJudge(
+  id: string,
+  input: { name: string; active: boolean; weight: number },
+) {
   const sb = await guard();
   await sb
     .from("judges")
-    .update({ name: input.name.trim(), active: input.active })
+    .update({
+      name: input.name.trim(),
+      active: input.active,
+      weight: Math.max(0, Number(input.weight) || 0),
+    })
     .eq("id", id);
   refresh();
   return { ok: true as const };

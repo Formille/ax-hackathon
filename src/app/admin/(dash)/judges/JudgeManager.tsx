@@ -46,7 +46,8 @@ export default function JudgeManager({ judges }: { judges: Judge[] }) {
         <h1 className="text-2xl font-bold">심사위원</h1>
         <p className="text-sm text-white/50">
           각 심사위원에게 코드와 <span className="font-mono">/judge</span> 링크를
-          개별 전달하세요.
+          개별 전달하세요. <b className="text-white/70">가중치</b>는 최종 심사 점수에
+          가중 평균으로 반영됩니다. (기본 1)
         </p>
       </div>
 
@@ -80,7 +81,11 @@ export default function JudgeManager({ judges }: { judges: Judge[] }) {
                       className="btn-ghost shrink-0 px-3 text-sm"
                       onClick={() =>
                         act(async () => {
-                          await updateJudge(j.id, { name: editName, active: j.active });
+                          await updateJudge(j.id, {
+                            name: editName,
+                            active: j.active,
+                            weight: Number(j.weight),
+                          });
                           setEditingId(null);
                         })
                       }
@@ -110,7 +115,28 @@ export default function JudgeManager({ judges }: { judges: Judge[] }) {
                 </button>
               </div>
 
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <label className="flex items-center gap-1 rounded-lg bg-black/30 px-2 py-1.5 text-sm text-white/60">
+                  가중치
+                  <input
+                    key={`w-${j.id}-${Number(j.weight)}`}
+                    type="number"
+                    min={0}
+                    step={0.5}
+                    defaultValue={Number(j.weight)}
+                    disabled={busy}
+                    onBlur={(e) =>
+                      act(() =>
+                        updateJudge(j.id, {
+                          name: j.name,
+                          active: j.active,
+                          weight: Number(e.target.value),
+                        }),
+                      )
+                    }
+                    className="w-12 rounded bg-transparent text-right font-semibold text-white outline-none"
+                  />
+                </label>
                 <button
                   className="btn-ghost px-2.5 py-1.5 text-sm"
                   onClick={() => {
@@ -122,7 +148,15 @@ export default function JudgeManager({ judges }: { judges: Judge[] }) {
                 </button>
                 <button
                   className="btn-ghost px-2.5 py-1.5 text-sm"
-                  onClick={() => act(() => updateJudge(j.id, { name: j.name, active: !j.active }))}
+                  onClick={() =>
+                    act(() =>
+                      updateJudge(j.id, {
+                        name: j.name,
+                        active: !j.active,
+                        weight: Number(j.weight),
+                      }),
+                    )
+                  }
                 >
                   {j.active ? "비활성화" : "활성화"}
                 </button>

@@ -9,12 +9,24 @@ insert into public.settings (id, event_name, phase, max_votes_per_voter, popular
 values (1, 'AX 해커톤 2026', 'draft', 0, '인기상')
 on conflict (id) do nothing;
 
--- Default rubric (편집 가능)
-insert into public.criteria (display_order, label, description, max_score, weight) values
-  (1, '혁신성',   '아이디어의 독창성과 새로움',        10, 1.0),
-  (2, '완성도',   '구현 수준과 동작 안정성',          10, 1.0),
-  (3, '실용성',   '문제 해결력과 시장/현업 적용성',    10, 1.0),
-  (4, '발표력',   '전달력과 데모 구성',               10, 0.5)
+-- 해커톤 트랙 심사 기준 (편집 가능). weight = % 비중.
+insert into public.criteria (display_order, label, max_score, weight, level_low, level_mid, level_high) values
+  (1, '업무 적용성',      10, 30,
+      '시나리오가 가상·실업무와 거리 있음',
+      '일부 부서·일부 상황에 적용 가능',
+      '즉시 현업 도입 가능, 절감 시간·범위가 정량 가시화'),
+  (2, '기술 적용 깊이',   10, 20,
+      '단순 LLM 호출·복붙 수준',
+      '의도적 프롬프트·RAG·도구 호출 등 적절히 활용',
+      '기술 선택과 설계 의도 명확, LLM 한계를 보완하는 구조'),
+  (3, '발표·시연 완결성', 10, 20,
+      '시연 불가, 핵심 기능 동작 X',
+      '핵심 흐름까지는 시연 가능, 일부 미완',
+      '실제 동작 + 청중이 즉시 이해 가능한 수준의 발표'),
+  (4, '확산 가능성',      10, 30,
+      '1회성·해당 팀에서만 의미',
+      '일부 모듈·로직은 재사용 가능',
+      '타 부서·타 업무로 즉시 이식 가능, 자산화 가능한 구조')
 on conflict do nothing;
 
 -- Demo participants (실제 운영 시 관리자에서 교체)

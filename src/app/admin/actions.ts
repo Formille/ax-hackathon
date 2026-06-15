@@ -126,6 +126,9 @@ export async function deleteParticipant(id: string) {
 export interface CriterionInput {
   label: string;
   description: string;
+  level_low: string;
+  level_mid: string;
+  level_high: string;
   max_score: number;
   weight: number;
   display_order: number;
@@ -135,6 +138,9 @@ function cleanCriterion(input: CriterionInput) {
   return {
     label: input.label.trim(),
     description: input.description.trim() || null,
+    level_low: input.level_low.trim() || null,
+    level_mid: input.level_mid.trim() || null,
+    level_high: input.level_high.trim() || null,
     max_score: Math.max(1, Math.min(100, Math.round(input.max_score))),
     weight: Math.max(0, Number(input.weight)),
     display_order: Math.round(input.display_order) || 0,

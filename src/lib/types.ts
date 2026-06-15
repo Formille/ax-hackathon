@@ -57,6 +57,9 @@ export interface Criterion {
   display_order: number;
   label: string;
   description: string | null;
+  level_low: string | null;
+  level_mid: string | null;
+  level_high: string | null;
   max_score: number;
   weight: number;
   created_at: string;

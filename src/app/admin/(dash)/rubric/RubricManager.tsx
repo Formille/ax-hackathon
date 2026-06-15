@@ -13,6 +13,9 @@ import {
 const EMPTY: CriterionInput = {
   label: "",
   description: "",
+  level_low: "",
+  level_mid: "",
+  level_high: "",
   max_score: 10,
   weight: 1,
   display_order: 0,
@@ -22,6 +25,9 @@ function toInput(c: Criterion): CriterionInput {
   return {
     label: c.label,
     description: c.description ?? "",
+    level_low: c.level_low ?? "",
+    level_mid: c.level_mid ?? "",
+    level_high: c.level_high ?? "",
     max_score: c.max_score,
     weight: Number(c.weight),
     display_order: c.display_order,
@@ -178,13 +184,39 @@ function Form({
         />
       </div>
       <div>
-        <label className="label">설명</label>
+        <label className="label">설명 (선택)</label>
         <input
           className="input"
           value={draft.description}
           onChange={(e) => up({ description: e.target.value })}
-          placeholder="아이디어의 독창성"
+          placeholder="한 줄 보조 설명"
         />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div>
+          <label className="label">낮음</label>
+          <textarea
+            className="input min-h-20 text-sm"
+            value={draft.level_low}
+            onChange={(e) => up({ level_low: e.target.value })}
+          />
+        </div>
+        <div>
+          <label className="label">보통</label>
+          <textarea
+            className="input min-h-20 text-sm"
+            value={draft.level_mid}
+            onChange={(e) => up({ level_mid: e.target.value })}
+          />
+        </div>
+        <div>
+          <label className="label">탁월</label>
+          <textarea
+            className="input min-h-20 text-sm"
+            value={draft.level_high}
+            onChange={(e) => up({ level_high: e.target.value })}
+          />
+        </div>
       </div>
       <div className="grid grid-cols-3 gap-3">
         <div>

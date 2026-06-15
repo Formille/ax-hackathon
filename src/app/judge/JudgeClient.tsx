@@ -38,6 +38,7 @@ export default function JudgeClient() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [showSummary, setShowSummary] = useState(false);
 
   const [draftScores, setDraftScores] = useState<Record<string, number>>({});
   const [draftScoreComments, setDraftScoreComments] = useState<Record<string, string>>({});
@@ -159,18 +160,26 @@ export default function JudgeClient() {
             {submittedCount}/{ws.participants.length} 팀 제출 완료
           </p>
         </div>
-        <button
-          className="btn-ghost text-sm"
-          onClick={() => {
-            clearJudgeCode();
-            setWs(null);
-            setCode("");
-            setSelectedId(null);
-            setView("login");
-          }}
-        >
-          로그아웃
-        </button>
+        <div className="flex gap-2">
+          <button
+            className={cn("text-sm", showSummary ? "btn-primary" : "btn-ghost")}
+            onClick={() => setShowSummary((s) => !s)}
+          >
+            {showSummary ? "평가로 돌아가기" : "📊 점수 요약"}
+          </button>
+          <button
+            className="btn-ghost text-sm"
+            onClick={() => {
+              clearJudgeCode();
+              setWs(null);
+              setCode("");
+              setSelectedId(null);
+              setView("login");
+            }}
+          >
+            로그아웃
+          </button>
+        </div>
       </div>
 
       {locked && (
@@ -179,6 +188,11 @@ export default function JudgeClient() {
         </div>
       )}
 
+      {showSummary ? (
+        <div className="mt-5">
+          <Summary ws={ws} />
+        </div>
+      ) : (
       <div className="mt-5 md:grid md:grid-cols-[280px_1fr] md:gap-6">
         {/* left: participant list */}
         <aside
@@ -191,6 +205,7 @@ export default function JudgeClient() {
             {ws.participants.map((p) => {
               const ev = ws.evaluations[p.id];
               const st = statusOf(ev);
+              const w = ev ? weighted(ws.criteria, ev.scores) : null;
               const active = p.id === selectedId;
               return (
                 <li key={p.id}>
@@ -207,7 +222,12 @@ export default function JudgeClient() {
                     {p.tagline && (
                       <p className="truncate text-xs text-white/45">{p.tagline}</p>
                     )}
-                    <span className={cn("pill mt-1.5", st.cls)}>{st.label}</span>
+                    <span className="mt-1.5 flex items-center gap-2">
+                      <span className={cn("pill", st.cls)}>{st.label}</span>
+                      {w && (
+                        <span className="text-xs font-bold text-brand-soft">{w.pct}점</span>
+                      )}
+                    </span>
                   </button>
                 </li>
               );
@@ -240,6 +260,7 @@ export default function JudgeClient() {
           )}
         </main>
       </div>
+      )}
       <Toast message={toast} />
     </section>
   );
@@ -275,6 +296,7 @@ function Detail({
   const p = ws.participants.find((x) => x.id === participantId)!;
   const shots = ws.screenshots[participantId] ?? [];
   const w = weighted(ws.criteria, draftScores);
+  const totalW = ws.criteria.reduce((a, c) => a + Number(c.weight), 0) || 1;
 
   return (
     <div className="pb-10">
@@ -326,13 +348,30 @@ function Detail({
           const val = draftScores[c.id] ?? 0;
           return (
             <div key={c.id} className="card p-4">
-              <div className="flex items-baseline justify-between">
-                <div>
-                  <h4 className="font-bold">{c.label}</h4>
-                  {c.description && <p className="text-xs text-white/45">{c.description}</p>}
-                </div>
-                <span className="text-sm text-white/40">가중치 ×{Number(c.weight)}</span>
+              <div className="flex items-baseline justify-between gap-3">
+                <h4 className="font-bold">{c.label}</h4>
+                <span className="shrink-0 text-sm text-white/40">
+                  비중 {Math.round((Number(c.weight) / totalW) * 100)}%
+                </span>
               </div>
+              {(c.level_low || c.level_mid || c.level_high) && (
+                <div className="mt-2 grid gap-1.5 text-xs sm:grid-cols-3">
+                  {[
+                    { t: "낮음", v: c.level_low, cls: "text-white/45" },
+                    { t: "보통", v: c.level_mid, cls: "text-gold/80" },
+                    { t: "탁월", v: c.level_high, cls: "text-accent" },
+                  ].map(
+                    (lv) =>
+                      lv.v && (
+                        <div key={lv.t} className="rounded-lg bg-white/5 p-2">
+                          <span className={cn("font-bold", lv.cls)}>{lv.t}</span>
+                          <p className="mt-0.5 text-white/50">{lv.v}</p>
+                        </div>
+                      ),
+                  )}
+                </div>
+              )}
+              {c.description && <p className="mt-2 text-xs text-white/45">{c.description}</p>}
               <div className="mt-3 flex items-center gap-4">
                 <input
                   type="range"
@@ -344,7 +383,7 @@ function Detail({
                   onChange={(e) =>
                     setDraftScores((s) => ({ ...s, [c.id]: Number(e.target.value) }))
                   }
-                  className="h-2 flex-1 cursor-pointer appearance-none rounded-full bg-white/10 accent-brand"
+                  className="h-6 flex-1 cursor-pointer accent-brand"
                 />
                 <span className="w-14 shrink-0 text-right text-lg font-bold tabular-nums">
                   {val}
@@ -386,6 +425,61 @@ function Detail({
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+function Summary({ ws }: { ws: JudgeWorkspace }) {
+  const totalW = ws.criteria.reduce((a, c) => a + Number(c.weight), 0) || 1;
+  return (
+    <div className="card overflow-x-auto p-4">
+      <h3 className="font-bold">내 평가 점수</h3>
+      <p className="mt-1 text-xs text-white/45">
+        제출·임시저장한 점수를 한눈에 확인하세요.
+      </p>
+      <table className="mt-3 w-full min-w-[560px] text-sm">
+        <thead>
+          <tr className="border-b border-white/10 text-left text-white/50">
+            <th className="py-2 pr-2">팀</th>
+            {ws.criteria.map((c) => (
+              <th key={c.id} className="py-2 pr-2 text-center">
+                {c.label}
+                <span className="block text-[10px] font-normal text-white/30">
+                  {Math.round((Number(c.weight) / totalW) * 100)}%
+                </span>
+              </th>
+            ))}
+            <th className="py-2 pr-2 text-right">종합</th>
+            <th className="py-2 pl-2 text-right">상태</th>
+          </tr>
+        </thead>
+        <tbody>
+          {ws.participants.map((p) => {
+            const ev = ws.evaluations[p.id];
+            const st = statusOf(ev);
+            const pct = ev ? weighted(ws.criteria, ev.scores).pct : null;
+            return (
+              <tr key={p.id} className="border-b border-white/5">
+                <td className="py-2 pr-2">
+                  <span className="font-medium">{p.project_name}</span>
+                  <span className="block text-xs text-white/40">{p.team_name}</span>
+                </td>
+                {ws.criteria.map((c) => (
+                  <td key={c.id} className="py-2 pr-2 text-center tabular-nums text-white/70">
+                    {ev ? (ev.scores[c.id] ?? 0) : "-"}
+                  </td>
+                ))}
+                <td className="py-2 pr-2 text-right font-bold tabular-nums">
+                  {pct != null ? pct : "-"}
+                </td>
+                <td className="py-2 pl-2 text-right">
+                  <span className={cn("pill", st.cls)}>{st.label}</span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }

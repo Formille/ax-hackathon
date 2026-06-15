@@ -193,7 +193,7 @@ export default function JudgeClient() {
           <Summary ws={ws} />
         </div>
       ) : (
-      <div className="mt-5 md:grid md:grid-cols-[280px_1fr] md:gap-6">
+      <div className="mt-5 md:grid md:grid-cols-[300px_1fr] md:gap-6 lg:grid-cols-[340px_1fr] lg:gap-8">
         {/* left: participant list */}
         <aside
           className={cn(

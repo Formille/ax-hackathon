@@ -33,6 +33,7 @@ export default async function VotePage() {
           maxVotes={settings.max_votes_per_voter}
           awardLabel={settings.popularity_award_label}
           screenshots={screenshots}
+          currentId={settings.current_participant_id}
         />
       )}
 

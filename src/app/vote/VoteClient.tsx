@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { Participant, ScreenshotView } from "@/lib/types";
 import ScreenshotCarousel from "@/components/ScreenshotCarousel";
+import AutoRefresh from "@/components/AutoRefresh";
 import { getRaffleToken, getVoteToken } from "@/lib/tokens";
 import {
   castVote,
@@ -21,11 +22,13 @@ export default function VoteClient({
   maxVotes,
   awardLabel,
   screenshots,
+  currentId,
 }: {
   participants: Participant[];
   maxVotes: number;
   awardLabel: string;
   screenshots: Record<string, ScreenshotView[]>;
+  currentId: string | null;
 }) {
   const [step, setStep] = useState<Step>("loading");
   const [name, setName] = useState("");
@@ -158,8 +161,13 @@ export default function VoteClient({
 
   // step === "vote"
   const remaining = maxVotes - selected.size;
+  const cur = currentId ? participants.find((p) => p.id === currentId) : null;
+  const ordered = cur
+    ? [cur, ...participants.filter((p) => p.id !== currentId)]
+    : participants;
   return (
     <section className="mt-6">
+      <AutoRefresh seconds={20} />
       <div className="flex items-end justify-between">
         <h1 className="text-2xl font-bold">좋은 아이디어에 투표하세요</h1>
       </div>
@@ -175,14 +183,15 @@ export default function VoteClient({
       </p>
 
       <ul className="mt-5 space-y-3">
-        {participants.map((p) => {
+        {ordered.map((p) => {
           const on = selected.has(p.id);
+          const isCurrent = p.id === currentId;
           return (
             <li
               key={p.id}
               className={`card overflow-hidden transition ${
                 on ? "border-brand ring-1 ring-brand/50" : ""
-              }`}
+              } ${isCurrent ? "border-accent ring-2 ring-accent/50" : ""}`}
             >
               <div className="flex gap-4 p-4">
                 {p.thumbnail_url ? (
@@ -198,6 +207,11 @@ export default function VoteClient({
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
+                  {isCurrent && (
+                    <span className="mb-1 inline-flex items-center gap-1 rounded-full bg-accent/20 px-2 py-0.5 text-[11px] font-bold text-accent">
+                      🔴 지금 발표 중
+                    </span>
+                  )}
                   <p className="text-xs font-medium text-brand-soft">{p.team_name}</p>
                   <h3 className="truncate text-lg font-bold">{p.project_name}</h3>
                   {p.tagline && (

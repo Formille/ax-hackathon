@@ -14,6 +14,7 @@ export interface JudgeEvalState {
 export interface JudgeWorkspace {
   judge: { id: string; name: string };
   judgingOpen: boolean;
+  currentParticipantId: string | null;
   participants: Participant[];
   criteria: Criterion[];
   evaluations: Record<string, JudgeEvalState>; // participantId -> state
@@ -95,6 +96,7 @@ export async function getJudgeWorkspace(
     data: {
       judge: { id: judge.id, name: judge.name },
       judgingOpen: settings.judging_open,
+      currentParticipantId: settings.current_participant_id,
       participants: (participants ?? []) as Participant[],
       criteria: (criteria ?? []) as Criterion[],
       evaluations,

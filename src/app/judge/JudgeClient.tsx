@@ -59,6 +59,17 @@ export default function JudgeClient() {
     });
   }, []);
 
+  // keep "now presenting" + statuses fresh during the event
+  useEffect(() => {
+    if (view !== "workspace" || !code) return;
+    const id = window.setInterval(() => {
+      getJudgeWorkspace(code).then((res) => {
+        if (res.ok) setWs(res.data);
+      });
+    }, 25000);
+    return () => window.clearInterval(id);
+  }, [view, code]);
+
   function flash(m: string) {
     setToast(m);
     window.setTimeout(() => setToast(null), 2200);
@@ -151,6 +162,13 @@ export default function JudgeClient() {
   const locked = !ws.judgingOpen;
   const sel = selectedId ? ws.participants.find((p) => p.id === selectedId) ?? null : null;
 
+  // current presenter floats to the top of the list
+  const currentId = ws.currentParticipantId;
+  const cur = currentId ? ws.participants.find((p) => p.id === currentId) : null;
+  const orderedParticipants = cur
+    ? [cur, ...ws.participants.filter((p) => p.id !== currentId)]
+    : ws.participants;
+
   return (
     <section className="mt-6">
       <div className="flex items-center justify-between">
@@ -202,11 +220,12 @@ export default function JudgeClient() {
           )}
         >
           <ul className="space-y-2">
-            {ws.participants.map((p) => {
+            {orderedParticipants.map((p) => {
               const ev = ws.evaluations[p.id];
               const st = statusOf(ev);
               const w = ev ? weighted(ws.criteria, ev.scores) : null;
               const active = p.id === selectedId;
+              const isCurrent = p.id === currentId;
               return (
                 <li key={p.id}>
                   <button
@@ -215,9 +234,16 @@ export default function JudgeClient() {
                       "w-full rounded-xl border p-3 text-left transition",
                       active
                         ? "border-brand bg-brand/10"
-                        : "border-white/10 bg-ink-card hover:border-white/25",
+                        : isCurrent
+                          ? "border-accent bg-accent/5 ring-1 ring-accent/40"
+                          : "border-white/10 bg-ink-card hover:border-white/25",
                     )}
                   >
+                    {isCurrent && (
+                      <span className="mb-1 inline-flex items-center gap-1 rounded-full bg-accent/20 px-2 py-0.5 text-[11px] font-bold text-accent">
+                        🔴 지금 발표 중
+                      </span>
+                    )}
                     <p className="truncate font-bold">{p.project_name}</p>
                     {p.tagline && (
                       <p className="truncate text-xs text-white/45">{p.tagline}</p>
